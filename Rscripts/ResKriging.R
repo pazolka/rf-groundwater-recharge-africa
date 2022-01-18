@@ -5,7 +5,7 @@ library(gstat)
 library(rgdal)
 library(raster)
 
-data <- read.csv("~/Desktop/Dissertation/poc.csv")
+data <- read.csv("~/Desktop/rf-groundwater-recharge-africa/poc.csv")
 # project coordinates to meters
 coordinates(data) <- c("Long", "Lat")
 proj4string(data) <- CRS("+proj=longlat +datum=WGS84")
@@ -42,11 +42,11 @@ FittedModel <- fit.variogram.reml(formula = res~1, locations=coordinates(dt),
 plot(TheVariogram, model=FittedModel)
 
 # get African grid
-study_area <- readOGR("~/Desktop/Dissertation/CRU_precip_CGIAR_AI_data/Africa_continent_shape.shp")
+study_area <- readOGR("~/Desktop/rf-groundwater-recharge-africa/CRU_precip_CGIAR_AI_data/Africa_continent_shape.shp")
 
 # read 0.5 precipitation raster
 # BGS raster
-precip <- raster("~/Desktop/Dissertation/Recharge_files/Africa_bgs_LTA_AnnPrecip.tif")
+precip <- raster("~/Desktop/rf-groundwater-recharge-africa/Recharge_files/Africa_bgs_LTA_AnnPrecip.tif")
 precip_Afr <- crop(precip, study_area)
 plot(precip_Afr)
 plot(study_area, add = TRUE)
