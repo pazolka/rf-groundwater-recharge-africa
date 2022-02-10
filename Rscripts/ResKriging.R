@@ -25,11 +25,13 @@ proj4string(data) <- CRS("+proj=longlat +datum=WGS84")
 data.coord <- as.data.frame(data@coords)
 
 # Transform the proection to WGS 1984 World Mercator projection for African Continent
-data.prj <- spTransform(data, CRS("+init=epsg:3395 +units=km"))  # World Mercator
+#data.prj <- spTransform(data, CRS("+init=epsg:3395 +units=km")) # World Mercator
+# keep for now even though it's unnecessary
+data.prj <- spTransform(data, CRS("+proj=longlat +datum=WGS84")) 
 data.coord <- as.data.frame(data.prj@coords)
 
 # log transformation of recharge values
-data.prj$Recharge_mmpa <- log(data.prj$Recharge_mmpa)   # why did you add 1 before taking log?
+data.prj$Recharge_mmpa <- log(data.prj$Recharge_mmpa) 
 
 ## fixed effects model
 fmodel <- function(pcp) {-5 + 1.388*log(pcp)}
@@ -40,7 +42,8 @@ colnames(res) <- c("res")
 
 # put residuals into a spatial data frame
 dt <- SpatialPointsDataFrame(coordinates(data.prj), res)
-proj4string(dt) <- CRS("+init=epsg:3395 +units=km")
+#proj4string(dt) <- CRS("+init=epsg:3395 +units=km")
+proj4string(dt) <-CRS("+proj=longlat +datum=WGS84")
 dt <- dt[!duplicated(dt@coords),]              # remove any points with duplicated coordinates!
 
 # empirical variogram
@@ -54,7 +57,8 @@ vario.model <- vgm(psill=0.489, model="Mat", nugget=0.759, range=288, kappa=0.5)
 #                                   data=dt, model=vario.model)  
 
 # !!!!!! not fitting the model anymore, taking optimal values from the paper
-#FittedModel <- fit.variogram(TheVariogram, model=vario.model)    
+#FittedModel <- fit.variogram(TheVariogram, model=vario.model)
+#vario.model <- fit.variogram(TheVariogram, model=vario.model)    
 plot(TheVariogram, model=vario.model)
 
 # get African grid
@@ -76,7 +80,7 @@ plot(study_area, add = TRUE)
 precip_df <- as(precip_Afr, 'SpatialPointsDataFrame')
 plot(precip_df)
 
-precip_df <- spTransform(precip_df, CRS("+init=epsg:3395 +units=km"))
+#precip_df <- spTransform(precip_df, CRS("+init=epsg:3395 +units=km"))
 plot(precip_df)
 
 # calculate fixed effect for each pixel
