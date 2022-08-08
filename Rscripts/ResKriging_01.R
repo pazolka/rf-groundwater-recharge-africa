@@ -3,14 +3,12 @@
 # R codes to reproduce groundwater recharge interpolation map of Africa
 ######################################################################################################
 
-library(nlme)
-library(lme4)
 library(sp)
 library(gstat)
 library(rgdal)
 library(raster)
 library(spaMM)
-
+library(nlme)
 library(sf)
 library(tidyverse)
 library(giscoR)
@@ -57,9 +55,27 @@ TheVariogram <- variogram(res~1, locations=coordinates(dt), data=dt)
 vario.model <- vgm(psill=1.184630, model="Mat", nugget=0.526024, range=603.6305, kappa=0.5)
 # fit variogram
 # FittedModel <- fit.variogram.reml(formula = res~1, locations=coordinates(dt), 
-#                                   data=dt, model=vario.model)  
+#                                   data=dt, model=vario.mo\del)  
 vario.model <- fit.variogram(TheVariogram, model=vario.model)    
 plot(TheVariogram, model=vario.model)
+
+new.data['res'] <- res
+
+##### reestimate fixed effect parameters with GLS
+# Matern model with kappa=0.5 is an Exp model
+mod.lmm.gls<-gls(recharge~rain, data=new.data, correlation=corExp(form=~res))
+
+pred.gls <- as.numeric(predict(mod.lmm.gls, new.data, re.form=NA))  # re.form = NA used to remove spatial effects
+# repeat -> recalculate residuals and create variogram
+res.gls <- as.data.frame(log(data$Recharge_mmpa) - pred.gls)
+colnames(res.gls) <- c("res")
+dt.gls <- SpatialPointsDataFrame(coordinates(data), res.gls)
+proj4string(dt.gls) <-CRS("+proj=longlat +datum=WGS84")
+dt.gls <- dt.gls[!duplicated(dt.gls@coords),]
+TheVariogramGLS <- variogram(res~1, locations=coordinates(dt.gls), data=dt.gls)
+vario.model.gls <- vgm(psill=1.184630, model="Mat", nugget=0.526024, range=603.6305, kappa=0.5)
+vario.model.gls <- fit.variogram(TheVariogramGLS, model=vario.model.gls)    
+plot(TheVariogramGLS, model=vario.model.gls)
 
 # get African grid
 study_area <- readOGR("CRU_precip_CGIAR_AI_data/Africa_continent_shape.shp")
@@ -83,7 +99,7 @@ plot(precip_df)
 # calculate fixed effect for each pixel
 #fixed_afr <- fmodel(precip_df@data[["LTA_CHIRPS_clipped_01"]])
 new.data <- data.frame(rain=log(precip_df@data[["LTA_CHIRPS_clipped_01"]]), x=precip_df$x, y=precip_df$y)
-fixed_afr <- as.numeric(predict(mod.lmm, new.data, re.form=NA))
+fixed_afr <- as.numeric(predict(mod.lmm.gls, new.data, re.form=NA))
 
 is.na(fixed_afr) <- sapply(fixed_afr, is.infinite)                  # to replace -Inf with NA
 #fixed_afr[is.na(fixed_afr)] <- mean(fixed_afr, na.rm=T)             # replace NA with mean precip
@@ -91,7 +107,7 @@ fixed_afr[is.na(fixed_afr)] <- 0             # replace NA with 0 precip: Sahara
 
 # get kriging predictions for residuals
 
-rand_afr <- gstat::krige(formula=res ~ 1, dt, newdata=precip_df, model=vario.model)
+rand_afr <- gstat::krige(formula=res ~ 1, dt.gls, newdata=precip_df, model=vario.model.gls)
 
 spplot(rand_afr["var1.pred"], main = "ordinary kriging predictions")
 spplot(rand_afr["var1.var"],  main = "ordinary kriging variance")
