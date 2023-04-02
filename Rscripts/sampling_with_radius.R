@@ -1,3 +1,5 @@
+# This script was used to sample predictor datasets at 0.1 deg at the recharge observation points
+
 library(raster)
 
 data <- read.csv("High_res_data_01/poc_01.csv", header=T)
