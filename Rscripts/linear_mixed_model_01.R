@@ -16,7 +16,8 @@ library(maptools)
 library(ggmap)
 library(rasterize)
 
-data <- read.csv("High_res_data_01/poc_01.csv", header=T)
+# parent directory is the working directory
+data <- read.csv("Data/High_res_data_01/input_01.csv", header=T)
 
 coordinates(data) <- c("Long", "Lat")
 proj4string(data) <- CRS("+proj=longlat +datum=WGS84")
@@ -73,11 +74,11 @@ vario.model.gls <- fit.variogram(TheVariogramGLS, model=vario.model.gls)
 plot(TheVariogramGLS, model=vario.model.gls)
 
 # get African grid
-study_area <- readOGR("CRU_precip_CGIAR_AI_data/Africa_continent_shape.shp")
+study_area <- readOGR("Data/Africa_continent_shape.shp")
 
 # read 0.1 precipitation raster
 # CHIRPS raster
-precip <- raster("High_res_data_01/LTA_CHIRPS_clipped_01.tif")
+precip <- raster("Data/High_res_data_01/LTA_CHIRPS_Afr_01.tif")
 
 proj4string(precip) <- CRS("+proj=longlat +datum=WGS84")
 
@@ -90,7 +91,7 @@ precip_df <- as(precip_Afr, 'SpatialPointsDataFrame')
 plot(precip_df)
 
 # calculate fixed effect for each pixel
-new.data <- data.frame(rain=log(precip_df@data[["LTA_CHIRPS_clipped_01"]]), x=precip_df$x, y=precip_df$y)
+new.data <- data.frame(rain=log(precip_df@data[["LTA_CHIRPS_Afr_01"]]), x=precip_df$x, y=precip_df$y)
 fixed_afr <- as.numeric(predict(mod.lmm.gls, new.data, re.form=NA))
 
 is.na(fixed_afr) <- sapply(fixed_afr, is.infinite)                  # to replace -Inf with NA
@@ -124,4 +125,4 @@ rgb.pal <- colorRampPalette(c("light blue","blue","yellow","orange","red2"), spa
 plot(final.raster, col=rgb.pal(200))
 
 # write to a file
-writeRaster(final.raster, filename="High_res_data_01/LMM_recharge_01.tif", format="GTiff", overwrite=T)
+writeRaster(final.raster, filename="Data/High_res_data_01/LMM_recharge_01.tif", format="GTiff", overwrite=T)

@@ -6,10 +6,11 @@
 library(gstat); library(sp); library(rgdal); library(RColorBrewer); library(ggplot2);
 library(raster); library(rasterize)
 
-af.shape <- readOGR("CRU_precip_CGIAR_AI_data/Africa_continent_shape.shp")
+# parent directory is the working directory
+af.shape <- readOGR("Data/Africa_continent_shape.shp")
 
 # read residuals file - calculated in python
-res <- read.csv("residuals.csv", header=T)
+res <- read.csv("Data/residuals.csv", header=T)
 
 # cast residuals to numeric values
 res$Res_05 <- sapply(res$Res_05, as.numeric)
@@ -67,7 +68,7 @@ attr(vario.mod1, "SSErr")
 res.df <- as.data.frame(res1)
 
 ###### # make grid 0.5 deg - alternative to minimize the information loss when reprojecting
-rf5.recharge <- raster("Low_res_data_05/RF_recharge.tif")
+rf5.recharge <- raster("Data/Low_res_data_05/RF_recharge.tif")
 rf5.recharge.afr <- crop(rf5.recharge, af.shape)
 rf5.pixels <- as(rf5.recharge, 'SpatialPixels')
 plot(rf5.pixels)
@@ -76,7 +77,7 @@ plot(rf5.pixels)
 res5.ok <- gstat::krige(RES05 ~ 1, res5, newdata=rf5.pixels, vario.mod5)
 
 ###### # make grid 0.1 deg - alternative to minimize the information loss when reprojecting
-rf1.recharge <- raster("High_res_data_01/RF_recharge_01.tif")
+rf1.recharge <- raster("Data/High_res_data_01/RF_recharge_01.tif")
 rf1.recharge.afr <- crop(rf1.recharge, af.shape)
 rf1.pixels <- as(rf1.recharge, 'SpatialPixels')
 plot(rf1.pixels)
@@ -110,5 +111,5 @@ rkrf1 <- 10**sum(log10(rf1.recharge), res1.ok.ras.resampled)
 proj4string(rkrf1) <- CRS("+proj=longlat +datum=WGS84")
 
 # write rasters
-writeRaster(rkrf5, filename="Low_res_data_05/R_RKRF_recharge_05.tif", format="GTiff", overwrite=T)
-writeRaster(rkrf1, filename="High_res_data_01/R_RKRF_recharge_01.tif", format="GTiff", overwrite=T)
+writeRaster(rkrf5, filename="Data/Low_res_data_05/R_RKRF_recharge_05.tif", format="GTiff", overwrite=T)
+writeRaster(rkrf1, filename="Data/High_res_data_01/R_RKRF_recharge_01.tif", format="GTiff", overwrite=T)
