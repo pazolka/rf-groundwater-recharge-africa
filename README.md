@@ -15,4 +15,7 @@ Here random forest regression is applied to obtain a recharge map at a spatial r
 
 
 
-This code is a part of a thesis submitted to the University College London for the Degree of Master of Science
+This code is a part of a thesis submitted to the University College London for the Degree of Master of Science.
+
+
+Refer to the following paper (preprint) for complete study: [Pazola et al. 2023](https://egusphere.copernicus.org/preprints/2023/egusphere-2023-1898/)
